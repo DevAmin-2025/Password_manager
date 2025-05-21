@@ -183,6 +183,36 @@ class PasswordManager:
         else:
             self.print_info("\nNo such website/service.")
 
+    def change_website_username(self):
+        """
+        Updates the saved username for a specific website/service.
+
+        Prompts the user to log in.
+        Checks if the website exists in the database for the user.
+        Allows the user to set a new username.
+        """
+        name = self.login()
+        if not name:
+            return
+        user_id = self.get_user_id(name)
+        website = input("Please enter the name of the website/service you want to change its username: ")
+        self.cursor.execute(
+            "SELECT website FROM passwords WHERE user_id = ?",
+            (user_id,)
+        )
+        websites = self.cursor.fetchall()
+        website_exists = [website in [w[0] for w in websites]][0]
+        if website_exists:
+            new_username = input(f"Please enter your new username for {website}: ")
+            self.cursor.execute(
+                "UPDATE passwords set username = ? WHERE user_id = ? and website = ?",
+                (new_username, user_id, website)
+            )
+            self.conn.commit()
+            self.print_info(f"\nUsername successfully changed for '{website}'.")
+        else:
+            self.print_info("\nNo such website/service.")
+
     def show_passwords(self):
         """
         Displays all stored passwords for the logged-in user.
@@ -289,9 +319,10 @@ if __name__ == "__main__":
         print("\t2. Change User-Password")
         print("\t3. Add Password")
         print("\t4. Change Website-Password")
-        print("\t5. View Passwords")
-        print("\t6. Delete Password")
-        print("\t7. Exit")
+        print("\t5. Change Website-Username")
+        print("\t6. View Passwords")
+        print("\t7. Delete Password")
+        print("\t8. Exit")
 
         choice = input("Select an option: ")
         if choice == "1":
@@ -303,10 +334,12 @@ if __name__ == "__main__":
         elif choice == "4":
             pm.change_website_password()
         elif choice == "5":
-            pm.show_passwords()
+            pm.change_website_username()
         elif choice == "6":
-            pm.delete_password()
+            pm.show_passwords()
         elif choice == "7":
+            pm.delete_password()
+        elif choice == "8":
             pm.print_info("\nExiting the app...")
             break
         else:
